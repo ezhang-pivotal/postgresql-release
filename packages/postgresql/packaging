@@ -4,8 +4,8 @@ set -e
 tar xfz postgresql/postgresql-9.3.9.tar.gz
 (
   cd postgresql-9.3.9
-  ./configure --prefix=$BOSH_INSTALL_TARGET
+  ./configure 
   make
-  make install
+  make PREFIX=$BOSH_INSTALL_TARGET install
 )
 
