@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Control script to start/stop ruby/rack postgresql job on a BOSH controlled VM
+#
+# In local development, this script can be run manually. Examples below assume you are in the root of this release project.
+#
+# Start process example:
+# APP_DIR=/path/to/postgresql RACK_ENV=development COMMAND=shotgun PORT=9393 jobs/postgresql/templates/postgresql_ctl start
+#
+# View STDOUT/STDERR logs:
+# jobs/postgresql/templates/postgresql_ctl logs
+#
+# Clear logs:
+# jobs/postgresql/templates/postgresql_ctl clearlogs
+
+# TODO - change "EXECUTABLE_SERVER" to the command to run
+
+RUN_DIR=/var/vcap/sys/run/postgresql
+LOG_DIR=/var/vcap/sys/log/postgresql
+STORE=/var/vcap/store/postgresql
+PIDFILE=$RUN_DIR/postgresql.pid
+
+export PATH=/var/vcap/packages/ruby/bin:$PATH
+
+COMMAND=${COMMAND:-/var/vcap/packages/postgresql/bin/pg_ctl}
+HOME=${HOME:-/home/vcap}
+
+case $1 in
+
+  start)
+    mkdir -p $RUN_DIR
+    mkdir -p $LOG_DIR
+    mkdir -p $STORE
+
+    echo $$ > $PIDFILE
+
+    exec pg_ctl start >>$LOG_DIR/postgresql.stdout.log 2>>$LOG_DIR/postgresql.stderr.log
+    ;;
+
+  stop)
+    PID=$(head -1 $PIDFILE)
+    kill $PID
+    while [ -e /proc/$PID ]; do sleep 0.1; done
+    rm -f $PIDFILE
+    ;;
+
+  logs)
+    cat $LOG_DIR/*
+    ;;
+
+  tail)
+    tail -f $LOG_DIR/*
+    ;;
+
+  clearlogs)
+    rm $LOG_DIR/*
+    ;;
+
+  *)
+  echo "Usage: postgresql_ctl {start|stop|logs|tail|clearlogs}" ;;
+esac
+exit 0

@@ -1,0 +1,7 @@
+---
+name: postgresql
+packages:
+- postgresql
+templates:
+  postgresql_ctl: bin/postgresql_ctl
+  postgresql.conf.erb: config/postgresql.conf
