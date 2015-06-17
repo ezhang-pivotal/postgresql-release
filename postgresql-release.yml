@@ -1,0 +1,51 @@
+---
+name: postgresql-release
+director_uuid: f303fefa-1701-4352-b1b4-ceb316e950ac
+release:
+  name: postgresql-release
+  version: 0+dev.7
+compilation:
+  workers: 1
+  network: default
+  cloud_properties:
+    ram: 2048
+    disk: 8192
+    cpu: 2
+update:
+  canaries: 1
+  canary_watch_time: 30000
+  update_watch_time: 30000
+  max_in_flight: 4
+  max_errors: 1
+networks:
+- name: default
+  subnets:
+  - static:
+    - 172.20.69.161
+    range: 172.20.69.0/24
+    gateway: 172.20.69.254
+    dns:
+    - 172.20.69.12
+    cloud_properties:
+      name: VM Network
+resource_pools:
+- name: common
+  network: default
+  size: 1
+  stemcell:
+    name: bosh-vsphere-esxi-ubuntu-trusty-go_agent
+    version: 2865.1
+  cloud_properties:
+    ram: 2048
+    disk: 8192
+    cpu: 2
+jobs:
+- name: postgresql
+  template: postgresql
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    static_ips:
+    - 172.20.69.161
+properties: {}
