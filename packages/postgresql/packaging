@@ -15,3 +15,11 @@ popd
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
 
+tar xfz postgresql/postgresql-9.3.9.tar.gz
+(
+  cd postgresql-9.3.9
+  ./configure --prefix=$BOSH_INSTALL_TARGET
+  make
+  make install
+)
+
