@@ -1,20 +1,6 @@
 # abort script on any command that exits with a non zero value
 set -e
 
-tar zxvf postgresql-9.3.9.tar.gz
-pushd postgresql-9.3.9
-  # need to run as root?
-  sudo su -
-  ./configure --prefix=${BOSH_INSTALL_TARGET}
-
-  gmake
-  gmake install
-popd
-
-# post-install procedures
-LD_LIBRARY_PATH=/usr/local/pgsql/lib
-export LD_LIBRARY_PATH
-
 tar xfz postgresql/postgresql-9.3.9.tar.gz
 (
   cd postgresql-9.3.9
@@ -22,4 +8,8 @@ tar xfz postgresql/postgresql-9.3.9.tar.gz
   make
   make install
 )
+
+# post-install procedures
+LD_LIBRARY_PATH=/usr/local/pgsql/lib
+export LD_LIBRARY_PATH
 
