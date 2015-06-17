@@ -1,62 +1,51 @@
-#!/bin/bash
+#!/bin/bash -e
 
-# Control script to start/stop ruby/rack postgresql job on a BOSH controlled VM
-#
-# In local development, this script can be run manually. Examples below assume you are in the root of this release project.
-#
-# Start process example:
-# APP_DIR=/path/to/postgresql RACK_ENV=development COMMAND=shotgun PORT=9393 jobs/postgresql/templates/postgresql_ctl start
-#
-# View STDOUT/STDERR logs:
-# jobs/postgresql/templates/postgresql_ctl logs
-#
-# Clear logs:
-# jobs/postgresql/templates/postgresql_ctl clearlogs
-
-# TODO - change "EXECUTABLE_SERVER" to the command to run
-
-RUN_DIR=/var/vcap/sys/run/postgresql
-LOG_DIR=/var/vcap/sys/log/postgresql
-STORE=/var/vcap/store/postgresql
-PIDFILE=$RUN_DIR/postgresql.pid
-
-export PATH=/var/vcap/packages/ruby/bin:$PATH
-
-COMMAND=${COMMAND:-/var/vcap/packages/postgresql/bin/pg_ctl}
-HOME=${HOME:-/home/vcap}
+LOG_DIR=/var/vcap/sys/log/postgres/
+DATA_DIR=/var/vcap/jobs/postgres/data/
+BASE_DIR=/var/vcap/packages/postgresql/
+BINARY_DIR=$BASE_DIR/bin
 
 case $1 in
-
   start)
-    mkdir -p $RUN_DIR
-    mkdir -p $LOG_DIR
-    mkdir -p $STORE
 
-    echo $$ > $PIDFILE
+   if ! test -d $LOG_DIR; then
 
-    exec pg_ctl start >>$LOG_DIR/postgresql.stdout.log 2>>$LOG_DIR/postgresql.stderr.log
+      sudo mkdir $LOG_DIR
+      sudo chown -R vcap:vcap $LOG_DIR
+   fi
+
+
+
+   if ! test -d $DATA_DIR; then
+      mkdir $DATA_DIR
+      sudo chown -R vcap:vcap $DATA_DIR
+      sudo chmod 700 $DATA_DIR
+
+      sudo -u vcap $BINARY_DIR/pg_ctl initdb -D $DATA_DIR -o "--auth=trust"
+
+      # enable TCP/IP connections
+      sed -i 's/#listen_addresses = 'localhost'/listen_addresses = '*'/g' $DATA_DIR/postgresql.conf
+      sed -i 's/#port = 5432/port = 5432/g' $DATA_DIR/postgresql.conf
+      echo 'host		all	all	0.0.0.0/0	trust' >>$DATA_DIR/pg_hba.conf 
+ 
+
+   fi
+ 
+   sudo -u vcap $BINARY_DIR/pg_ctl start -l $LOG_DIR/server.log -D $DATA_DIR
+
+
     ;;
 
   stop)
-    PID=$(head -1 $PIDFILE)
-    kill $PID
-    while [ -e /proc/$PID ]; do sleep 0.1; done
-    rm -f $PIDFILE
-    ;;
 
-  logs)
-    cat $LOG_DIR/*
-    ;;
+    sudo -u vcap $BINARY_DIR/pg_ctl stop -D $DATA_DIR -l $LOG_DIR/server.log
 
-  tail)
-    tail -f $LOG_DIR/*
-    ;;
-
-  clearlogs)
-    rm $LOG_DIR/*
     ;;
 
   *)
-  echo "Usage: postgresql_ctl {start|stop|logs|tail|clearlogs}" ;;
+    echo "Usage: pgsql_ctl {start|stop}"
+
+    ;;
+
 esac
-exit 0
+
