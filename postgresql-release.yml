@@ -3,7 +3,7 @@ name: postgresql-release
 director_uuid: f303fefa-1701-4352-b1b4-ceb316e950ac
 release:
   name: postgresql-release
-  version: 0+dev.10
+  version: 0+dev.11
 compilation:
   workers: 1
   network: default
